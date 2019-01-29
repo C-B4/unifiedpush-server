@@ -1,6 +1,7 @@
 package org.jboss.aerogear.unifiedpush.service.impl.spring;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.jboss.aerogear.unifiedpush.api.PushApplication;
 import org.springframework.cache.annotation.Cacheable;
@@ -12,7 +13,7 @@ public interface IKeycloakService {
 
 	void removeClient(PushApplication pushApplicaiton);
 
-	void createVerifiedUserIfAbsent(String userName, String password);
+	void createVerifiedUserIfAbsent(String userName, String password, UUID userId);
 
 	boolean exists(String userName);
 
@@ -28,6 +29,6 @@ public interface IKeycloakService {
 	boolean isInitialized();
 
 	String strip(String fqdn);
-	
+
 	String seperator();
 }

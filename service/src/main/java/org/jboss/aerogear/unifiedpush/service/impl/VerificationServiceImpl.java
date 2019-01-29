@@ -153,7 +153,7 @@ public class VerificationServiceImpl implements VerificationService {
 				if (resetOnly) {
 					keycloakService.resetUserPassword(alias, verificationAttempt.getCode());
 				} else {
-					keycloakService.createVerifiedUserIfAbsent(alias, verificationAttempt.getCode());
+					keycloakService.createVerifiedUserIfAbsent(alias, verificationAttempt.getCode(), aliasObj.getId());
 				}
 			}
 
@@ -189,7 +189,7 @@ public class VerificationServiceImpl implements VerificationService {
 
 			// Enable OAuth2 User
 			if (keycloakService.isInitialized() && verificationAttempt.isOauth2()) {
-				keycloakService.createVerifiedUserIfAbsent(installation.getAlias(), verificationAttempt.getCode());
+				keycloakService.createVerifiedUserIfAbsent(installation.getAlias(), verificationAttempt.getCode(), null);
 			}
 
 			return VerificationResult.SUCCESS;

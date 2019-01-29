@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -33,7 +34,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class KeycloakServiceImpl implements IKeycloakService {
-	private static final Logger logger = LoggerFactory.getLogger(KeycloakServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(KeycloakServiceImpl.class);
 
 	private static final String CLIENT_PREFIX = "ups-installation-";
 	private static final String KEYCLOAK_ROLE_USER = "installation";
@@ -41,8 +42,9 @@ public class KeycloakServiceImpl implements IKeycloakService {
 
 	private static final String ATTRIBUTE_VARIANT_SUFFIX = "_variantid";
 	private static final String ATTRIBUTE_SECRET_SUFFIX = "_secret";
+    public static final String USER_ID_PROPERTY = "user_id";
 
-	private volatile Boolean oauth2Enabled;
+    private volatile Boolean oauth2Enabled;
 	private Keycloak kc;
 	private RealmResource realm;
 
@@ -165,8 +167,9 @@ public class KeycloakServiceImpl implements IKeycloakService {
 	 *
 	 * @param userName unique userName
 	 * @param password password
+     * @param userId GUID of the user, to be added as keycloak attribute
 	 */
-	public void createVerifiedUserIfAbsent(String userName, String password) {
+	public void createVerifiedUserIfAbsent(String userName, String password, UUID userId) {
 		if (!isInitialized()) {
 			return;
 		}
@@ -174,7 +177,7 @@ public class KeycloakServiceImpl implements IKeycloakService {
 		UserRepresentation user = getUser(userName);
 
 		if (user == null) {
-			user = create(userName, password, true);
+			user = create(userName, password, true, userId);
 
 			this.realm.users().create(user);
 
@@ -189,7 +192,7 @@ public class KeycloakServiceImpl implements IKeycloakService {
 		}
 	}
 
-	private UserRepresentation create(String userName, String password, boolean enabled) {
+	private UserRepresentation create(String userName, String password, boolean enabled, UUID userId) {
 		UserRepresentation user = new UserRepresentation();
 		user.setUsername(userName);
 
@@ -204,6 +207,11 @@ public class KeycloakServiceImpl implements IKeycloakService {
 
 			user.setCredentials(Arrays.asList(getUserCredentials(password, false)));
 		}
+        if (userId == null) {
+            logger.warn("create(userName={}) no userId received", userName);
+        } else {
+            user.singleAttribute(USER_ID_PROPERTY, userId.toString());
+        }
 
 		return user;
 	}
@@ -373,7 +381,7 @@ public class KeycloakServiceImpl implements IKeycloakService {
 
 		return StringUtils.EMPTY;
 	}
-	
+
 	public String seperator() {
 		return conf.getRooturlMatcher().seperator();
 	}
