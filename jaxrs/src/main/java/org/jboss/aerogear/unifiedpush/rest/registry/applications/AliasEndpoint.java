@@ -180,9 +180,10 @@ public class AliasEndpoint extends AbstractBaseEndpoint {
 			try {
 				URI uri = new URI(request.getRequestURI());
 
-				if (StringUtils.startsWithIgnoreCase(uri.getHost(), domain.toString())) {
+				String host = uri.getHost();
+				if (StringUtils.startsWithIgnoreCase(host, domain.toString())) {
 					// Already subdomain access, use host as subdomain
-					associated.setSubdomain(uri.getHost());
+					associated.setSubdomain(host);
 				} else {
 					domain.append(associated.getSeperator());
 					domain.append(request.getServerName());
