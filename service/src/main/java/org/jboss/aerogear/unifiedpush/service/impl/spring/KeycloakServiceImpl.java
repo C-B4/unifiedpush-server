@@ -385,4 +385,23 @@ public class KeycloakServiceImpl implements IKeycloakService {
 	public String seperator() {
 		return conf.getRooturlMatcher().seperator();
 	}
+
+    @Override
+    public boolean updateUserAttribute(String aliasId, UUID guid) {
+        if (!isInitialized()) {
+            throw new RuntimeException("keycloak not initialized");
+        }
+
+        UserRepresentation user = getUser(aliasId);
+        if (user == null) {
+            logger.info("Unable to find user {}, in keycloak", aliasId);
+            return false;
+        }
+
+        UsersResource users = this.realm.users();
+        UserResource userResource = users.get(user.getId());
+        user.singleAttribute(USER_ID_PROPERTY, guid.toString());
+        userResource.update(user);
+        return true;
+    }
 }

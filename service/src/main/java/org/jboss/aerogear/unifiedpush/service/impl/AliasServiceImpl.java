@@ -16,11 +16,14 @@
  */
 package org.jboss.aerogear.unifiedpush.service.impl;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
@@ -255,6 +258,23 @@ public class AliasServiceImpl implements AliasService {
 	@Async
 	public void createAsynchronous(Alias alias) {
 		create(alias);
+	}
+
+	@Override
+	public long updateKCUsersGuids() {
+		Map<String, UUID> aliasToGuid = aliasDao.findAllUserIds().map(row -> {
+			UUID userGuid = row.getUUID(0);
+			String alias = row.getString(1);
+			return new AbstractMap.SimpleImmutableEntry<>(alias, userGuid);
+		}).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+		long updates = 0L;
+		for (Map.Entry<String, UUID> user : aliasToGuid.entrySet()) {
+			boolean updated = keycloakService.updateUserAttribute(user.getKey(), user.getValue());
+			if (updated) {
+				updates++;
+			}
+		}
+		return updates;
 	}
 
 	public class Associated {

@@ -31,4 +31,6 @@ public interface IKeycloakService {
 	String strip(String fqdn);
 
 	String seperator();
+
+	boolean updateUserAttribute(String aliasId, UUID guid);
 }
