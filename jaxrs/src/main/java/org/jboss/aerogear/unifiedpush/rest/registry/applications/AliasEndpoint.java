@@ -603,7 +603,7 @@ public class AliasEndpoint extends AbstractBaseEndpoint {
 	@ReturnType("org.jboss.aerogear.unifiedpush.api.Alias")
 	public Response updateKcGuids(@Context HttpServletRequest request) {
 		try {
-			long updated = aliasService.updateKCUsersGuids();
+			int updated = aliasService.updateKCUsersGuids();
 			return appendAllowOriginHeader(Response.ok(Collections.singletonMap("count", updated)), request);
 		} catch (Exception e) {
 			logger.error("Cannot update guids", e);

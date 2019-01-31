@@ -2,6 +2,7 @@ package org.jboss.aerogear.unifiedpush.service.impl.spring;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.aerogear.unifiedpush.api.PushApplication;
 import org.jboss.aerogear.unifiedpush.api.Variant;
+import org.jboss.aerogear.unifiedpush.service.impl.UserIdentifiers;
 import org.jboss.aerogear.unifiedpush.service.impl.spring.OAuth2Configuration.DomainMatcher;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.keycloak.admin.client.Keycloak;
@@ -31,6 +33,10 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 
 @Service
 public class KeycloakServiceImpl implements IKeycloakService {
@@ -54,7 +60,7 @@ public class KeycloakServiceImpl implements IKeycloakService {
 	@Autowired
 	private IOAuth2Configuration conf;
 
-	public boolean isInitialized() {
+    public boolean isInitialized() {
 		if (!conf.isOAuth2Enabled()) {
 			return false;
 		}
@@ -386,22 +392,63 @@ public class KeycloakServiceImpl implements IKeycloakService {
 		return conf.getRooturlMatcher().seperator();
 	}
 
+    public static final int BULK_SIZE = 100;
+
+    public static final ObjectMapper MAPPER = new ObjectMapper();
+
+    public static final ObjectWriter WRITER = MAPPER.writer();
+
     @Override
-    public boolean updateUserAttribute(String aliasId, UUID guid) {
+    public int updateUserAttribute(Map<String, ? extends Collection<UserIdentifiers>> aliasToIdentifiers) {
         if (!isInitialized()) {
             throw new RuntimeException("keycloak not initialized");
         }
 
-        UserRepresentation user = getUser(aliasId);
-        if (user == null) {
-            logger.info("Unable to find user {}, in keycloak", aliasId);
-            return false;
-        }
-
+        int updated = 0;
         UsersResource users = this.realm.users();
-        UserResource userResource = users.get(user.getId());
-        user.singleAttribute(USER_ID_PROPERTY, guid.toString());
-        userResource.update(user);
-        return true;
+        Integer count = users.count();
+        int iterations = count / BULK_SIZE;
+        for (int i = 0; i < iterations; i++) {
+            updated = getUpdated(aliasToIdentifiers, updated, users, i, BULK_SIZE);
+        }
+        int remainder = count % BULK_SIZE;
+        updated = getUpdated(aliasToIdentifiers, updated, users, iterations, remainder);
+
+        return updated;
+    }
+
+    private int getUpdated(Map<String, ? extends Collection<UserIdentifiers>> aliasToIdentifiers, int updated,
+                           UsersResource users, int iterations, int remainder) {
+        List<UserRepresentation> remainderUsers = users.list(iterations * BULK_SIZE, remainder);
+        updated += updateUsers(aliasToIdentifiers, users, remainderUsers);
+        return updated;
+    }
+
+    private int updateUsers(Map<String, ? extends Collection<UserIdentifiers>> aliasToIdentifiers, UsersResource users,
+                            List<UserRepresentation> bulkUsers) {
+        int total = 0;
+        for (UserRepresentation userRepresentation : bulkUsers) {
+            String username = userRepresentation.getUsername();
+            Collection<UserIdentifiers> userIdentifiers = aliasToIdentifiers.get(username);
+            if (userIdentifiers == null) {
+                logger.warn("updateUsers() Found KC user={} without record in cassandra", username);
+                continue;
+            }
+            UserResource userResource = users.get(userRepresentation.getId());
+            try {
+                userRepresentation.singleAttribute(USER_ID_PROPERTY, toUserIdentifierString(userIdentifiers));
+            } catch (JsonProcessingException e) {
+                logger.warn("updateUsers() failed ({}) to write user identifiers for user={}: {}",
+                        e.getClass().getSimpleName(), username, e.getMessage());
+                continue;
+            }
+            userResource.update(userRepresentation);
+            total++;
+        }
+        return total;
+    }
+
+    private String toUserIdentifierString(Collection<UserIdentifiers> userIdentifiers) throws JsonProcessingException {
+        return WRITER.writeValueAsString(userIdentifiers);
     }
 }

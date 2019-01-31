@@ -94,5 +94,5 @@ public interface AliasService {
 
 	void createAsynchronous(Alias alias);
 
-    long updateKCUsersGuids();
+    int updateKCUsersGuids();
 }

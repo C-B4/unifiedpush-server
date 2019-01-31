@@ -18,7 +18,10 @@ package org.jboss.aerogear.unifiedpush.service.impl;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -50,6 +53,7 @@ import com.datastax.driver.core.utils.UUIDs;
 
 @Service
 public class AliasServiceImpl implements AliasService {
+	public static final Comparator<UUID> TIMEBASED_UUID_COMPARATOR = Comparator.comparingLong(UUID::timestamp);
 	private final Logger logger = LoggerFactory.getLogger(AliasServiceImpl.class);
 
 	@Inject
@@ -261,20 +265,17 @@ public class AliasServiceImpl implements AliasService {
 	}
 
 	@Override
-	public long updateKCUsersGuids() {
-		Map<String, UUID> aliasToGuid = aliasDao.findAllUserIds().map(row -> {
-			UUID userGuid = row.getUUID(0);
-			String alias = row.getString(1);
-			return new AbstractMap.SimpleImmutableEntry<>(alias, userGuid);
-		}).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-		long updates = 0L;
-		for (Map.Entry<String, UUID> user : aliasToGuid.entrySet()) {
-			boolean updated = keycloakService.updateUserAttribute(user.getKey(), user.getValue());
-			if (updated) {
-				updates++;
-			}
-		}
-		return updates;
+	public int updateKCUsersGuids() {
+		Map<String, List<UserIdentifiers>> aliasToIdentifiers = aliasDao.findAllUserIds().
+				collect(Collectors.groupingBy(row -> row.getString(1),
+						Collectors.mapping(row -> {
+							UUID userGuid = row.getUUID(0);
+							UUID pushId = row.getUUID(2);
+							String clientId = getClientId(pushId);
+							return new UserIdentifiers(userGuid, pushId, clientId);
+						}, Collectors.toList())));
+
+		return keycloakService.updateUserAttribute(aliasToIdentifiers);
 	}
 
 	public class Associated {

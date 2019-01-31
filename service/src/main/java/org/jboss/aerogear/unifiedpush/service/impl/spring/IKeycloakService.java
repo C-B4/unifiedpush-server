@@ -1,9 +1,12 @@
 package org.jboss.aerogear.unifiedpush.service.impl.spring;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.jboss.aerogear.unifiedpush.api.PushApplication;
+import org.jboss.aerogear.unifiedpush.service.impl.UserIdentifiers;
 import org.springframework.cache.annotation.Cacheable;
 
 public interface IKeycloakService {
@@ -32,5 +35,5 @@ public interface IKeycloakService {
 
 	String seperator();
 
-	boolean updateUserAttribute(String aliasId, UUID guid);
+	int updateUserAttribute(Map<String, ? extends Collection<UserIdentifiers>> aliasToIdentifiers);
 }
