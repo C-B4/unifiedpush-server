@@ -4,18 +4,18 @@ import java.util.UUID;
 
 public class UserIdentifiers {
 
-    private final UUID guid;
+    private final UUID userGuid;
     private final UUID pushId;
     private final String client;
 
-    public UserIdentifiers(UUID guid, UUID pushId, String client) {
-        this.guid = guid;
+    public UserIdentifiers(UUID userGuid, UUID pushId, String client) {
+        this.userGuid = userGuid;
         this.pushId = pushId;
         this.client = client;
     }
 
-    public UUID getGuid() {
-        return guid;
+    public UUID getUserGuid() {
+        return userGuid;
     }
 
     public UUID getPushId() {
