@@ -16,7 +16,7 @@ public interface IKeycloakService {
 
 	void removeClient(PushApplication pushApplicaiton);
 
-	void createVerifiedUserIfAbsent(String userName, String password, UUID userId);
+	void createVerifiedUserIfAbsent(String userName, String password, UserIdentifiers userIdentifiers);
 
 	boolean exists(String userName);
 

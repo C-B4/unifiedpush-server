@@ -20,6 +20,7 @@ import org.jboss.aerogear.unifiedpush.cassandra.dao.model.OtpCode;
 import org.jboss.aerogear.unifiedpush.cassandra.dao.model.OtpCodeKey;
 import org.jboss.aerogear.unifiedpush.dao.InstallationDao;
 import org.jboss.aerogear.unifiedpush.service.AliasService;
+import org.jboss.aerogear.unifiedpush.service.PushApplicationService;
 import org.jboss.aerogear.unifiedpush.service.VerificationPublisher.MessageType;
 import org.jboss.aerogear.unifiedpush.service.VerificationService;
 import org.jboss.aerogear.unifiedpush.service.impl.spring.IConfigurationService;
@@ -53,6 +54,8 @@ public class VerificationServiceImpl implements VerificationService {
 	private OtpCodeService codeService;
 	@Inject
 	protected ServiceCacheConfig cacheService;
+	@Inject
+	private PushApplicationService pushApplicationService;
 
 	@PostConstruct
 	private void startup() {
@@ -153,7 +156,10 @@ public class VerificationServiceImpl implements VerificationService {
 				if (resetOnly) {
 					keycloakService.resetUserPassword(alias, verificationAttempt.getCode());
 				} else {
-					keycloakService.createVerifiedUserIfAbsent(alias, verificationAttempt.getCode(), aliasObj.getId());
+					UUID pushId = aliasObj.getPushApplicationId();
+					String clientId = pushApplicationService.getPushName(pushId);
+					UserIdentifiers userIdentifiers = new UserIdentifiers(aliasObj.getId(), pushId, clientId);
+					keycloakService.createVerifiedUserIfAbsent(alias, verificationAttempt.getCode(), userIdentifiers);
 				}
 			}
 

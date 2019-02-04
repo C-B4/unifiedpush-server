@@ -17,6 +17,7 @@
 package org.jboss.aerogear.unifiedpush.service;
 
 import java.util.Map;
+import java.util.UUID;
 
 import org.jboss.aerogear.unifiedpush.api.PushApplication;
 import org.jboss.aerogear.unifiedpush.api.Variant;
@@ -34,7 +35,7 @@ public interface PushApplicationService {
      * @param user logged-in user
      */
     void addPushApplication(PushApplication pushApp, LoggedInUser user) throws IllegalArgumentException;
-    
+
 
     /**
      * Performs an update/merge on the given entity.
@@ -75,4 +76,6 @@ public interface PushApplicationService {
 
     @Cacheable(value = PushApplicationService.APPLICATION_CACHE_BY_NAME, unless = "#result == null")
     PushApplication findByName(String name);
+
+    String getPushName(UUID pushId);
 }

@@ -18,6 +18,7 @@ package org.jboss.aerogear.unifiedpush.service.impl;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import javax.inject.Inject;
 
@@ -125,6 +126,12 @@ public class PushApplicationServiceImpl implements PushApplicationService {
 	@Override
 	public PushApplication findByName(String name) {
 		return pushApplicationDao.findByPushApplicationName(name);
+	}
+
+	@Override
+	public String getPushName(UUID pushId) {
+		PushApplication pushApp = findByPushApplicationID(pushId.toString());
+		return pushApp.getName().toLowerCase();
 	}
 
 	private void evictByVariantId(String variantId) {

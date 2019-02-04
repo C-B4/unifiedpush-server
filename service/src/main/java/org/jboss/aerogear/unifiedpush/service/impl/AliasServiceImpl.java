@@ -271,8 +271,8 @@ public class AliasServiceImpl implements AliasService {
 						Collectors.mapping(row -> {
 							UUID userGuid = row.getUUID(0);
 							UUID pushId = row.getUUID(2);
-							String clientId = getClientId(pushId);
-							return new UserIdentifiers(userGuid, pushId, clientId);
+							String pushName = pushApplicationService.getPushName(pushId);
+							return new UserIdentifiers(userGuid, pushId, pushName);
 						}, Collectors.toList())));
 
 		return keycloakService.updateUserAttribute(aliasToIdentifiers);

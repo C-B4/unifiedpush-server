@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -173,9 +172,9 @@ public class KeycloakServiceImpl implements IKeycloakService {
 	 *
 	 * @param userName unique userName
 	 * @param password password
-     * @param userId GUID of the user, to be added as keycloak attribute
+     * @param userIdentifiers identifiers of the user, to be added as keycloak attribute
 	 */
-	public void createVerifiedUserIfAbsent(String userName, String password, UUID userId) {
+	public void createVerifiedUserIfAbsent(String userName, String password, UserIdentifiers userIdentifiers) {
 		if (!isInitialized()) {
 			return;
 		}
@@ -183,7 +182,7 @@ public class KeycloakServiceImpl implements IKeycloakService {
 		UserRepresentation user = getUser(userName);
 
 		if (user == null) {
-			user = create(userName, password, true, userId);
+			user = create(userName, password, true, userIdentifiers);
 
 			this.realm.users().create(user);
 
@@ -198,7 +197,7 @@ public class KeycloakServiceImpl implements IKeycloakService {
 		}
 	}
 
-	private UserRepresentation create(String userName, String password, boolean enabled, UUID userId) {
+	private UserRepresentation create(String userName, String password, boolean enabled, UserIdentifiers userIdentifiers) {
 		UserRepresentation user = new UserRepresentation();
 		user.setUsername(userName);
 
@@ -213,10 +212,17 @@ public class KeycloakServiceImpl implements IKeycloakService {
 
 			user.setCredentials(Arrays.asList(getUserCredentials(password, false)));
 		}
-        if (userId == null) {
-            logger.warn("create(userName={}) no userId received", userName);
+        if (userIdentifiers == null) {
+            logger.error("create(username={}) no userIdentifiers received", userName);
+            throw new IllegalStateException("Missing userIdentifiers for username " + userName);
         } else {
-            user.singleAttribute(USER_ID_PROPERTY, userId.toString());
+            try {
+                user.singleAttribute(USER_ID_PROPERTY, toUserIdentifierString(Collections.singleton(userIdentifiers)));
+            } catch (JsonProcessingException e) {
+                logger.error("create(username={}) Failed ({}) to write identifier={} : {}, username",
+                        e.getClass().getSimpleName(), userIdentifiers, e.getMessage());
+                throw new RuntimeException("Failed to write identifier=" + userIdentifiers +" username=" + userName, e);
+            }
         }
 
 		return user;
@@ -334,8 +340,8 @@ public class KeycloakServiceImpl implements IKeycloakService {
 		return isClientExists(getClientd(pushApp));
 	}
 
-	public static String getClientd(PushApplication pushApp) {
-		return CLIENT_PREFIX + pushApp.getName().toLowerCase();
+	public static String getClientd(PushApplication pushAppName) {
+		return CLIENT_PREFIX + pushAppName.getName().toLowerCase();
 	}
 
 	public static String stripClientPrefix(String clientId) {
