@@ -47,7 +47,7 @@ public class KeycloakServiceImpl implements IKeycloakService {
 
 	private static final String ATTRIBUTE_VARIANT_SUFFIX = "_variantid";
 	private static final String ATTRIBUTE_SECRET_SUFFIX = "_secret";
-    public static final String USER_ID_PROPERTY = "user_id";
+    public static final String USER_ID_PROPERTY = "userTenantRelations";
 
     private volatile Boolean oauth2Enabled;
 	private Keycloak kc;
