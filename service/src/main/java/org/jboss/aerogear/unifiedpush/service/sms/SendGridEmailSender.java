@@ -104,7 +104,11 @@ public class SendGridEmailSender extends AbstractEmailSender implements Verifica
 		props.setProperty(USERNAME_KEY, "XXX Support");
 		props.setProperty(PASSWORD_KEY, "XXX");
 		props.setProperty(FROMADDR_KEY, "no-reply@example.com");
+<<<<<<< HEAD
 		props.setProperty(BCCADDR_KEY, "no-reply-bcc@example.com");
+=======
+		props.setProperty(BCCADDR_KEY, "no-reply@example.com");
+>>>>>>> c1511574537018d41285d37ebb1cdc8da25874ae
 		props.setProperty(SUBJECT_KEY, "Email verification code from XXX");
 		props.setProperty(MESSAGE_TMPL,
 				"Your verification code for the XXX mobile application is: <b>{0}</b>. Please use this code to verify your device.</br></br>Thank you for using CB4.</br>Sincerely,</br>The XXX Team");
