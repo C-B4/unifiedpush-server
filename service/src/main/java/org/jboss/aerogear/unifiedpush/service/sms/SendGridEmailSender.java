@@ -60,7 +60,7 @@ public class SendGridEmailSender extends AbstractEmailSender implements Verifica
 				content.setType("text/html");
 				content.setValue(getMessage(messageSource, getEmailMessageKey(type), locale, code));
 				mail.addContent(content);
-//
+
 				Personalization personalization = new Personalization();
 				Email to = new Email();
 				to.setEmail(alias);
