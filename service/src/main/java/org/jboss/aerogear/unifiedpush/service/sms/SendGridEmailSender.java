@@ -34,13 +34,14 @@ public class SendGridEmailSender extends AbstractEmailSender implements Verifica
 		final String username = getProperty(properties, USERNAME_KEY);
 		final String password = getProperty(properties, PASSWORD_KEY);
 		final String fromaddr = getProperty(properties, FROMADDR_KEY);
+		final String bccaddr = getProperty(properties, BCCADDR_KEY, "support@cb4.com");
 
 		final String subject = getMessage(messageSource, getSubjectMessageKey(type), locale);
 
 		try {
 			if (hostname == null || portnumb == null || username == null || password == null || fromaddr == null
 					|| alias == null) {
-				logger.warn("SendGrid Configuraiton peoperties are missing, unable to send Email request");
+				logger.warn("SendGrid Configuration properties are missing, unable to send Email request");
 				return;
 			}
 
@@ -64,6 +65,11 @@ public class SendGridEmailSender extends AbstractEmailSender implements Verifica
 				Email to = new Email();
 				to.setEmail(alias);
 				personalization.addTo(to);
+				if(bccaddr != null) {
+					Email bcc = new Email();
+					bcc.setEmail(bccaddr);
+					personalization.addBcc(bcc);
+				}
 				mail.addPersonalization(personalization);
 
 				// Send the mail
@@ -98,6 +104,7 @@ public class SendGridEmailSender extends AbstractEmailSender implements Verifica
 		props.setProperty(USERNAME_KEY, "XXX Support");
 		props.setProperty(PASSWORD_KEY, "XXX");
 		props.setProperty(FROMADDR_KEY, "no-reply@example.com");
+		props.setProperty(BCCADDR_KEY, "no-reply-bcc@example.com");
 		props.setProperty(SUBJECT_KEY, "Email verification code from XXX");
 		props.setProperty(MESSAGE_TMPL,
 				"Your verification code for the XXX mobile application is: <b>{0}</b>. Please use this code to verify your device.</br></br>Thank you for using CB4.</br>Sincerely,</br>The XXX Team");
