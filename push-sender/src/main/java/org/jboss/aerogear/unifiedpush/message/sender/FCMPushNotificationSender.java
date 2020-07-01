@@ -33,6 +33,7 @@ import org.jboss.aerogear.unifiedpush.api.VariantType;
 import org.jboss.aerogear.unifiedpush.message.InternalUnifiedPushMessage;
 import org.jboss.aerogear.unifiedpush.message.Priority;
 import org.jboss.aerogear.unifiedpush.message.UnifiedPushMessage;
+import org.jboss.aerogear.unifiedpush.message.apns.APNs;
 import org.jboss.aerogear.unifiedpush.message.sender.fcm.ConfigurableFCMSender;
 import org.jboss.aerogear.unifiedpush.service.ClientInstallationAsyncService;
 import org.jboss.aerogear.unifiedpush.service.ClientInstallationService;
@@ -91,7 +92,9 @@ public class FCMPushNotificationSender implements PushNotificationSender {
         fcmBuilder.addData("alert", message.getAlert());
         fcmBuilder.addData("sound", message.getSound());
         fcmBuilder.addData("badge", String.valueOf(message.getBadge()));
-        Notification notification = new Notification.Builder("").body(message.getAlert()).build();
+        final APNs apns = message.getApns();
+        final String msgTitle = (apns != null) ? apns.getTitle() : "";
+        Notification notification = new Notification.Builder("").body(message.getAlert()).title(msgTitle).build();
         fcmBuilder.notification(notification);
 
         /*
