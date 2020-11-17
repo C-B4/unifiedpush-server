@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -403,16 +404,37 @@ public class KeycloakServiceImpl implements IKeycloakService {
 		return jsons;
 	}
 
+	// applicationName is used to fetch its relevant realm from the cache
+	// However, for SSO realms, this will never occur since we fall back to the default realm
+	// So we will use a more robust approach and actually search for the applicationName in
+	// the non-default realms as well
 	public String getRealmName(String applicationName) {
 		applicationName = applicationName.toLowerCase();
-		String realmName = realmsService.get(applicationName);
+		String realmName = null;
+		try {
+			realmName = realmsService.get(applicationName);
+		} catch (Exception ex) {
+			logger.warn("Failed to retrieve realm from cache for {}, cause: {}", applicationName, ex.getMessage());
+			realmName = null;
+		}
 		if(realmName == null){
-			Keycloak keycloak = kc.getKeycloak();
-			RealmResource realmResource = keycloak.realm(applicationName);
 			try {
-				realmName = realmResource.toRepresentation().getRealm();
+				Keycloak keycloak = kc.getKeycloak();
+				Iterator<RealmRepresentation> realmsIter = keycloak.realms().findAll().iterator();
+				while (realmName==null && realmsIter.hasNext()) {
+					RealmRepresentation realmRep = realmsIter.next();
+					String thisRealmName = realmRep.getRealm();
+					if(realmRep.isEnabled()) {
+						// Note that application isn't client and requires the prefix
+						ClientRepresentation client = isClientExists(CLIENT_PREFIX + applicationName, thisRealmName);
+						if (client != null) {
+							// This is the exit condition from this loop
+							realmName = thisRealmName;
+						}
+					}
+				}
 			} catch (Exception ex) {
-				logger.warn("Failed to retrieve realm representation for realm {}, cause: {}", applicationName, ex.getMessage());
+				logger.warn("Failed to retrieve realm representation for client {}, cause: {}", applicationName, ex.getMessage());
 				realmName = conf.getUpsiRealm();
 			}
 			realmsService.insert(applicationName, realmName);
