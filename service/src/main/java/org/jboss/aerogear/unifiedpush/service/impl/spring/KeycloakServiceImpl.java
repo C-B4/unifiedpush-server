@@ -285,14 +285,20 @@ public class KeycloakServiceImpl implements IKeycloakService {
 	}
 
 	private ClientRepresentation isClientExists(String clientId, String realm) {
-		List<ClientRepresentation> clients = getRealm(realm).clients().findByClientId(clientId);
+		try {
+			List<ClientRepresentation> clients = getRealm(realm).clients().findByClientId(clientId);
 
-		if (clients == null || clients.size() == 0) {
+			if (clients == null || clients.size() == 0) {
+				return null;
+			}
+
+			// Return first client
+			return clients.get(0);
+		} catch (Exception e) {
+			logger.warn("isClientExists({}) failed: {} (client={} realm={})",
+					e.getClass().getSimpleName(), clientId, realm, e.getMessage());
 			return null;
 		}
-
-		// Return first client
-		return clients.get(0);
 	}
 
 	private Map<String, String> getClientAttributes(PushApplication pushApp) {
@@ -432,6 +438,10 @@ public class KeycloakServiceImpl implements IKeycloakService {
 							realmName = thisRealmName;
 						}
 					}
+				}
+				if(realmName == null) {
+					realmName = conf.getUpsiRealm();
+					logger.warn("Failed to find the client {} in any realm, reverting to default realm {}", applicationName, realmName);
 				}
 			} catch (Exception ex) {
 				logger.warn("Failed to retrieve realm representation for client {}, cause: {}", applicationName, ex.getMessage());
