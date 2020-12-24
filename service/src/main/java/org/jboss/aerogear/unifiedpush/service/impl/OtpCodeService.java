@@ -5,6 +5,8 @@ import org.jboss.aerogear.unifiedpush.cassandra.dao.model.OtpCodeKey;
 
 public interface OtpCodeService {
 
+	OtpCode addAttempt(OtpCodeKey key);
+
 	OtpCode save(OtpCodeKey key);
 
 	void delete(OtpCodeKey key);

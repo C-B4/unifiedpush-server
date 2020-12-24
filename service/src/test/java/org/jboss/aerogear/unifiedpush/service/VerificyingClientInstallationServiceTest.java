@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 
 import javax.inject.Inject;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.jboss.aerogear.unifiedpush.api.AndroidVariant;
 import org.jboss.aerogear.unifiedpush.api.Installation;
 import org.jboss.aerogear.unifiedpush.api.InstallationVerificationAttempt;
@@ -137,4 +138,35 @@ public class VerificyingClientInstallationServiceTest extends AbstractCassandraS
 		assertEquals(VerificationResult.FAIL, result);
 	}
 
+	@Test
+	@Transactional
+	public void testResetVerificationCodeAfterFailedAttempts() {
+		final int VERIFICATION_CODE_LENGTH = 5;
+		final int MAX_ATTEMPTS = 5;
+
+		final String deviceToken = TestUtils.generateFakedDeviceTokenString();
+		Installation device = new Installation();
+		device.setAlias("myalias");
+		device.setDeviceToken(deviceToken);
+		device.setVariant(androidVariant);
+
+		clientInstallationService.addInstallation(androidVariant, device);
+
+		String verificationCode = verificationService.initiateDeviceVerification(device, androidVariant);
+		assertNotNull(verificationCode);
+
+		String fakeVerificationCode = RandomStringUtils.random(VERIFICATION_CODE_LENGTH, false, true);
+
+		// try a wrong code 5 times
+		for (int i=0; i < MAX_ATTEMPTS; i++) {
+			VerificationResult result = verificationService.verifyDevice(device, androidVariant,
+					new InstallationVerificationAttempt(fakeVerificationCode, device.getDeviceToken()));
+			assertEquals(VerificationResult.FAIL, result);
+		}
+
+		// previous code shouldn't work as well now
+		VerificationResult result = verificationService.verifyDevice(device, androidVariant,
+				new InstallationVerificationAttempt(verificationCode, device.getDeviceToken()));
+		assertEquals(VerificationResult.FAIL, result);
+	}
 }

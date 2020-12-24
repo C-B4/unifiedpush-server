@@ -1,5 +1,6 @@
 package org.jboss.aerogear.unifiedpush.cassandra.test.integration.dao;
 
+import java.util.Locale;
 import java.util.UUID;
 
 import org.jboss.aerogear.unifiedpush.cassandra.CassandraConfig;
@@ -26,7 +27,7 @@ public class NoSQLOtpCodeDaoTest extends FixedKeyspaceCreatingIntegrationTest {
 	@Test
 	public void testCreateCode() {
 		UUID variantId = UUID.randomUUID();
-		OtpCodeKey key = new OtpCodeKey(variantId, UUID.randomUUID().toString(), "123456");
+		OtpCodeKey key = new OtpCodeKey(variantId, UUID.randomUUID().toString(), "123456", Locale.ENGLISH);
 		codeDao.save(new OtpCode(key));
 	}
 
@@ -34,7 +35,7 @@ public class NoSQLOtpCodeDaoTest extends FixedKeyspaceCreatingIntegrationTest {
 	@Test
 	public void testCreateWithTTL() {
 		UUID variantId = UUID.randomUUID();
-		OtpCodeKey key = new OtpCodeKey(variantId, UUID.randomUUID().toString(), "123456");
+		OtpCodeKey key = new OtpCodeKey(variantId, UUID.randomUUID().toString(), "123456", Locale.ENGLISH);
 		InsertOptions options = InsertOptions.builder().ttl(2).build();
 		OtpCode code1 = new OtpCode(key);
 		codeDao.save(code1, options);
@@ -59,8 +60,8 @@ public class NoSQLOtpCodeDaoTest extends FixedKeyspaceCreatingIntegrationTest {
 		UUID variantId = UUID.randomUUID();
 		UUID deviceToken = UUID.randomUUID();
 
-		OtpCodeKey key1 = new OtpCodeKey(variantId, deviceToken.toString(), "12345");
-		OtpCodeKey key2 = new OtpCodeKey(variantId, deviceToken.toString(), "67890");
+		OtpCodeKey key1 = new OtpCodeKey(variantId, deviceToken.toString(), "12345", Locale.ENGLISH);
+		OtpCodeKey key2 = new OtpCodeKey(variantId, deviceToken.toString(), "67890", Locale.ENGLISH);
 
 		codeDao.save(new OtpCode(key1));
 		codeDao.save(new OtpCode(key2));
@@ -68,7 +69,7 @@ public class NoSQLOtpCodeDaoTest extends FixedKeyspaceCreatingIntegrationTest {
 		OtpCode code1 = codeDao.findById(key1).orElse(null);
 		Assert.assertTrue(code1 != null);
 
-		codeDao.deleteAll(new OtpCodeKey(variantId, deviceToken.toString(), null));
+		codeDao.deleteAll(new OtpCodeKey(variantId, deviceToken.toString(), null, Locale.ENGLISH));
 
 		OtpCode code2 = codeDao.findById(key1).orElse(null);
 		Assert.assertTrue(code2 == null);
