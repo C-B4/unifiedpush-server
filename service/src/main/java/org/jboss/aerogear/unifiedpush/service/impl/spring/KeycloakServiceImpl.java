@@ -190,7 +190,7 @@ public class KeycloakServiceImpl implements IKeycloakService {
 
 		UserRepresentation user = getUser(userName, realmName);
 		if (user == null) {
-			logger.debug(String.format("Unable to find user %s, in keyclock", userName));
+			logger.debug(String.format("(exists) Unable to find user %s, app %s, in keyclock (realm %s)", userName, applicationName, realmName));
 			return false;
 		}
 
@@ -208,7 +208,7 @@ public class KeycloakServiceImpl implements IKeycloakService {
 
 		UserRepresentation user = getUser(userName, realmName);
 		if (user == null) {
-			logger.debug(String.format("Unable to find user %s, in keyclock", userName));
+			logger.debug(String.format("(delete) Unable to find user %s, app %s, in keyclock (realm %s)", userName, applicationName, realmName));
 			return;
 		}
 
@@ -228,7 +228,7 @@ public class KeycloakServiceImpl implements IKeycloakService {
 	private void updateUserPassword(String aliasId, String currentPassword, String newPassword, boolean temp, String realmName) {
 		UserRepresentation user = getUser(aliasId, realmName);
 		if (user == null) {
-			logger.debug(String.format("Unable to find user %s, in keyclock", aliasId));
+			logger.debug(String.format("(updateUserPassword) Unable to find user %s, in keyclock (realm %s)", aliasId, realmName));
 			return;
 		}
 

@@ -161,7 +161,7 @@ public class VerificationServiceImpl implements VerificationService {
 			String realmName = keycloakService.getRealmName(pushApplication.getName());
 			if (verificationAttempt.isOauth2()) {
 				if (resetOnly) {
-					keycloakService.resetUserPassword(alias, verificationAttempt.getCode(), realmName);
+					keycloakService.resetUserPassword(alias, verificationAttempt.getCode(), pushApplication.getName());
 				} else {
 					Collection<UserTenantInfo> tenantRelations = aliasService.getTenantRelations(alias);
 					keycloakService.createVerifiedUserIfAbsent(alias, verificationAttempt.getCode(), tenantRelations, realmName);
