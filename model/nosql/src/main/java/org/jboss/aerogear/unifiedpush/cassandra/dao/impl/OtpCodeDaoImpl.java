@@ -12,8 +12,11 @@ import org.springframework.data.cassandra.repository.support.CassandraRepository
 import org.springframework.stereotype.Repository;
 import org.springframework.util.Assert;
 
+import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
+
+import java.util.Optional;
 
 @Repository
 class OtpCodeDaoImpl extends CassandraBaseDao<OtpCode, OtpCodeKey> implements OtpCodeDao {
@@ -30,6 +33,15 @@ class OtpCodeDaoImpl extends CassandraBaseDao<OtpCode, OtpCodeKey> implements Ot
 				"ConsistencyLevel Must be QUORUM");
 
 		writeOptions = InsertOptions.builder().consistencyLevel(getConsistencyLevel()).ttl(CODE_TTL).build();
+	}
+
+	@Override
+	public Optional<OtpCode> findById(OtpCodeKey id) {
+		Select select = QueryBuilder.select().from(super.tableName);
+		select.where(QueryBuilder.eq(OtpCodeKey.FIELD_VARIANT_ID, id.getVariantId()));
+		select.where(QueryBuilder.eq(OtpCodeKey.FIELD_TOKEN_ID, id.getTokenId()));
+		OtpCodeKey entity = operations.selectOne(select, OtpCodeKey.class);
+		return Optional.ofNullable(new OtpCode(entity));
 	}
 
 	@SuppressWarnings("unchecked")

@@ -87,13 +87,17 @@ public class VerificationServiceImpl implements VerificationService {
 		verificationService.sendVerificationMessage(aliasObj.getPushApplicationId().toString(), alias, type,
 				verificationCode, locale);
 
-		OtpCodeKey okey = new OtpCodeKey(NullUUID.NULL.getUuid(), alias, verificationCode);
+		OtpCodeKey okey = new OtpCodeKey(NullUUID.NULL.getUuid(), alias, verificationCode, locale);
 
-		logger.debug("Add new otpcache code: {}, to variant: {}", okey.getCode(), okey.getVariantId());
-		addToCache(okey);
+		// Before starting a new flow, make sure the DB is empty as well
+		clearCache();
+		codeService.delete(okey);
 
 		// Write code to cassandra with default ttl of one hour
+		logger.debug("Add new otpcache code: {}, to variant: {} using locale: {}", okey.getCode(), okey.getVariantId(), okey.getLocale().toLanguageTag());
 		codeService.save(okey);
+
+		addToCache(okey);
 
 		return verificationCode;
 	}
@@ -122,13 +126,13 @@ public class VerificationServiceImpl implements VerificationService {
 		}
 
 		OtpCodeKey okey = new OtpCodeKey(UUID.fromString(variant.getVariantID()), installation.getDeviceToken(),
-				verificationCode);
-
-		logger.debug("Add new otpCache code: {}, to variant: {}", okey.getCode(), okey.getVariantId());
-		addToCache(okey);
+				verificationCode, Locale.ENGLISH);
 
 		// Write code to cassandra with default ttl of one hour
+		logger.debug("Add new otpCache code: {}, to variant: {} with default English locale", okey.getCode(), okey.getVariantId());
 		codeService.save(okey);
+
+		addToCache(okey);
 
 		return verificationCode;
 	}
@@ -143,7 +147,7 @@ public class VerificationServiceImpl implements VerificationService {
 			return null;
 		}
 
-		OtpCodeKey okey = new OtpCodeKey(variantId, alias, verificationAttempt.getCode());
+		OtpCodeKey okey = new OtpCodeKey(variantId, alias, verificationAttempt.getCode(), Locale.ENGLISH);
 
 		if (isValid(okey, verificationAttempt.getCode())) {
 			// Remove from local cache
@@ -157,7 +161,7 @@ public class VerificationServiceImpl implements VerificationService {
 			String realmName = keycloakService.getRealmName(pushApplication.getName());
 			if (verificationAttempt.isOauth2()) {
 				if (resetOnly) {
-					keycloakService.resetUserPassword(alias, verificationAttempt.getCode(), realmName);
+					keycloakService.resetUserPassword(alias, verificationAttempt.getCode(), pushApplication.getName());
 				} else {
 					Collection<UserTenantInfo> tenantRelations = aliasService.getTenantRelations(alias);
 					keycloakService.createVerifiedUserIfAbsent(alias, verificationAttempt.getCode(), tenantRelations, realmName);
@@ -166,8 +170,16 @@ public class VerificationServiceImpl implements VerificationService {
 
 			return VerificationResult.SUCCESS;
 		} else {
-			logger.debug("Verification attempt failed for tokenId: {}, VariantId: {}, code: {}", okey.getTokenId(),
-					okey.getVariantId(), okey.getCode());
+			logger.debug("Verification attempt failed for tokenId: {}, VariantId: {}, code: {}, attempt: {}, locale: {}", okey.getTokenId(),
+					okey.getVariantId(), okey.getCode(), okey.getAttempts(), okey.getLocale().toLanguageTag());
+			OtpCode updatedOtp = codeService.addAttempt(okey);
+			if(updatedOtp.getKey().shouldResetOtpCode()) {
+				logger.debug("Verification attempt failed for tokenId: {}, VariantId: {}, code: {} with locale: {} - reset due to too many attempts", okey.getTokenId(),
+						okey.getVariantId(), okey.getCode(), okey.getAttempts(), okey.getLocale().toLanguageTag());
+				deviceToToken.remove(updatedOtp.getKey());
+				codeService.delete(updatedOtp.getKey());
+				initiateDeviceVerification(alias, resetOnly ? MessageType.RESET : MessageType.REGISTER, updatedOtp.getKey().getLocale());
+			}
 			return VerificationResult.FAIL;
 		}
 	}
@@ -180,7 +192,7 @@ public class VerificationServiceImpl implements VerificationService {
 	public VerificationResult verifyDevice(Installation installation, Variant variant,
 			InstallationVerificationAttempt verificationAttempt) {
 		OtpCodeKey okey = new OtpCodeKey(UUID.fromString(variant.getVariantID()), installation.getDeviceToken(),
-				verificationAttempt.getCode());
+				verificationAttempt.getCode(), Locale.ENGLISH);
 
 		if (isValid(okey, verificationAttempt.getCode())) {
 			installation.setEnabled(true);
@@ -241,7 +253,7 @@ public class VerificationServiceImpl implements VerificationService {
 	}
 
 	private void loadBehind(OtpCodeKey okey) {
-		logger.debug("Missing code form local cache, trying to use cassandra backing cache");
+		logger.debug("Missing code in local cache, trying to use cassandra backing cache");
 
 		OtpCode code = codeService.findOne(okey);
 		if (code != null) {
@@ -270,6 +282,8 @@ public class VerificationServiceImpl implements VerificationService {
 			codes = deviceToToken.get(okey);
 		}
 
+		// Hack so the cache won't be affected by locale and code changes will be minimal
+		okey.setLocale(Locale.ENGLISH);
 		codes.add(okey.getCode());
 		deviceToToken.putIfAbsent(okey, codes);
 	}

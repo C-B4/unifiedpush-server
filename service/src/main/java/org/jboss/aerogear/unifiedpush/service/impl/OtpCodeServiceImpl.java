@@ -16,6 +16,14 @@ public class OtpCodeServiceImpl implements OtpCodeService {
 	private OtpCodeDao codeDao;
 
 	@Override
+	public OtpCode addAttempt(OtpCodeKey key) {
+		OtpCode otp = findOne(key);
+		delete(key);
+		otp.getKey().increaseAttempts();
+		return save(otp.getKey());
+	}
+
+	@Override
 	public OtpCode save(OtpCodeKey key) {
 		return codeDao.save(new OtpCode(key));
 	}

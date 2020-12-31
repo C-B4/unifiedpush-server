@@ -48,6 +48,7 @@ import org.jboss.aerogear.unifiedpush.service.PushApplicationService;
 import org.jboss.aerogear.unifiedpush.service.impl.spring.IKeycloakService;
 import org.jboss.aerogear.unifiedpush.service.impl.spring.IOAuth2Configuration;
 import org.jboss.aerogear.unifiedpush.service.impl.spring.KeycloakServiceImpl;
+import org.jboss.aerogear.unifiedpush.service.impl.spring.OAuth2Configuration;
 import org.jboss.aerogear.unifiedpush.spring.ServiceCacheConfig;
 import org.jboss.aerogear.unifiedpush.spring.ServiceCacheConfig.ClusterEvent;
 import org.slf4j.Logger;
@@ -195,9 +196,11 @@ public class AliasServiceImpl implements AliasService {
 			expectedHost.append(realmName)
 					.append(keycloakService.separator())
 					.append(conf.getRootUrlDomain());
-			if (host.equals(expectedHost.toString()) // host contains the correct realm and domain
-					|| host.equals(conf.getRootUrlDomain()) // host contains domain only, this happens when request comes from mobile
-					|| realmName.equals(conf.getUpsiRealm())) { // the realm is as before realm separation(unifiedpush-installations)
+			// User can't be associated with the installation realm or master realm
+			boolean validRealm = !OAuth2Configuration.DEFAULT_OAUTH2_UPS_REALM.equals(realmName) &&
+					!OAuth2Configuration.DEFAULT_OAUTH2_UPS_MASTER_REALM.equals(realmName);
+			if (validRealm || host.equals(expectedHost.toString()) // host contains the correct realm and domain
+					|| host.equals(conf.getRootUrlDomain())) { // host contains domain only, this happens when request comes from mobile
 				return new Associated(true, getClientId(aliasObj.getPushApplicationId()), keycloakService.separator());
 			}
 		}
