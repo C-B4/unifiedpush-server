@@ -1,5 +1,8 @@
 package org.jboss.aerogear.unifiedpush.service.impl.spring;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,6 +22,7 @@ public class OAuth2Configuration implements IOAuth2Configuration {
 	private static final String KEY_OAUTH2_UPS_REALM = "aerogear.config.oauth2.ups.realm.name";
 	private static final String KEY_OAUTH2_UPSI_REALM = "aerogear.config.oauth2.upsi.realm.name";
 	private static final String KEY_OAUTH2_UPS_MASTER_REALM = "aerogear.config.oauth2.ups.master.realm.name";
+	private static final String KEY_OAUTH2_CORS_VALID_ORIGINS = "aerogear.config.oauth2.ups.cors.valid.origins";
 
 	private static final String KEY_OAUTH2_ADMIN_USERNAME = "aerogear.config.oauth2.admin.username";
 	private static final String KEY_OAUTH2_ADMIN_PASSWORD = "aerogear.config.oauth2.admin.password";
@@ -37,6 +41,7 @@ public class OAuth2Configuration implements IOAuth2Configuration {
 	public static final String DEFAULT_OAUTH2_UPSI_REALM = "unifiedpush-installations";
 	public static final String DEFAULT_OAUTH2_UPS_MASTER_REALM = "master";
 	public static final String DEFAULT_SUBDOMAIN_SEPERATOR = "-";
+	public static final String DEFAULT_CORS_VALID_ORIGINS = "";
 
 	private static ConfigurationEnvironment configuration;
 
@@ -134,6 +139,12 @@ public class OAuth2Configuration implements IOAuth2Configuration {
 
 	public static String getStaticUpsiRealm() {
 		return getProperty(KEY_OAUTH2_UPSI_REALM, DEFAULT_OAUTH2_UPSI_REALM);
+	}
+
+	public static List<String> getStaticCorsValidOrigins() {
+		String originsProp = getProperty(KEY_OAUTH2_CORS_VALID_ORIGINS, DEFAULT_CORS_VALID_ORIGINS);
+		List<String> originFilters = new ArrayList<String>(Arrays.asList(originsProp.split(",")));
+		return originFilters;
 	}
 
 	public ConfigurationEnvironment getConfiguration() {
