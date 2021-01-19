@@ -833,12 +833,12 @@
 		<repository>
 			<id>jboss-public-repository-group</id>
 			<name>JBoss Public Maven Repository Group</name>
-			<url>http://repository.jboss.org/nexus/content/groups/public/</url>
+			<url>https://repository.jboss.org/nexus/content/groups/public/</url>
 		</repository>
 		<repository>
 			<id>spring-libs-milestone</id>
 			<name>Spring Snapshot Repository</name>
-			<url>http://repo.spring.io/libs-milestone-local</url>
+			<url>https://repo.spring.io/libs-milestone-local</url>
 		</repository>
 	</repositories>
 </project>
