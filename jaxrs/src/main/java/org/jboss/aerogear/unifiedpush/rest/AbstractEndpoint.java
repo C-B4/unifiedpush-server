@@ -19,7 +19,7 @@ public class AbstractEndpoint {
     // (Super-Pharm is an exception due to its existence in production)
     private static List<Pattern> originPatterns =
             convertRegexStringsToPatterns(
-                    Stream.concat(Arrays.asList("^https://cb4/",
+                    Stream.concat(Arrays.asList("^https://cb4/?([a-zA-Z0-9./]*)","^ios://cb4/?([a-zA-Z0-9./]*)","^android://cb4/?([a-zA-Z0-9./]*)",
                                         "^https://(([a-zA-Z0-9-]+)(-|.))?mcs.c-b4.(com|info)/?([a-zA-Z0-9./]*)").stream(),
                             OAuth2Configuration.getStaticCorsValidOrigins().stream())
                             .collect(Collectors.toList()));
