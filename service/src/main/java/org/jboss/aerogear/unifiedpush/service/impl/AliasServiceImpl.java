@@ -201,7 +201,7 @@ public class AliasServiceImpl implements AliasService {
 					!OAuth2Configuration.DEFAULT_OAUTH2_UPS_MASTER_REALM.equals(realmName);
 			if (validRealm || host.equals(expectedHost.toString()) // host contains the correct realm and domain
 					|| host.equals(conf.getRootUrlDomain())) { // host contains domain only, this happens when request comes from mobile
-				return new Associated(true, getClientId(aliasObj.getPushApplicationId()), keycloakService.separator());
+				return new Associated(true, getClientId(aliasObj.getPushApplicationId()), keycloakService.separator(), realmName);
 			}
 		}
 		return new Associated(false);
@@ -351,18 +351,21 @@ public class AliasServiceImpl implements AliasService {
 		private String client;
 		private String seperator;
 		private String subdomain;
+		private String realm;
 
-		public Associated(boolean associated, String client) {
+		public Associated(boolean associated, String client, String realm) {
 			super();
 			this.associated = associated;
 			this.client = client;
+			this.realm = realm;
 		}
 
-		public Associated(boolean associated, String client, String seperator) {
+		public Associated(boolean associated, String client, String seperator, String realm) {
 			super();
 			this.associated = associated;
 			this.client = client;
 			this.seperator = seperator;
+			this.realm = realm;
 		}
 
 		public Associated(boolean associated) {
@@ -385,6 +388,8 @@ public class AliasServiceImpl implements AliasService {
 		public String getSubdomain() {
 			return subdomain;
 		}
+
+		public String getRealm() { return realm; }
 
 		public void setSubdomain(String subdomain) {
 			this.subdomain = subdomain;
