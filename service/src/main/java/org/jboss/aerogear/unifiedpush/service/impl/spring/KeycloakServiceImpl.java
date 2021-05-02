@@ -361,7 +361,9 @@ public class KeycloakServiceImpl implements IKeycloakService {
 	}
 
 	private void setTenantRelationsAsAttribute(Collection<UserTenantInfo> tenantRelations, UserRepresentation user) throws JsonProcessingException {
-		user.setAttributes(Collections.singletonMap(USER_TENANT_RELATIONS, toTenantInfosString(tenantRelations)));
+		Map<String, List<String>> currentAttributes = user.getAttributes();
+		final List<String> utrListValues = toTenantInfosString(tenantRelations);
+		currentAttributes.merge(USER_TENANT_RELATIONS, utrListValues, (oldUtr, newUtr) -> newUtr);
 	}
 
 	private int updateUsersAttributeChunk(Map<String, ? extends Collection<UserTenantInfo>> aliasToIdentifiers, int updated,
