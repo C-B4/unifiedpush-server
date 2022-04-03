@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.jboss.aerogear.unifiedpush.api.PushApplication;
 import org.jboss.aerogear.unifiedpush.service.impl.UserTenantInfo;
+import org.keycloak.admin.client.resource.KeyResource;
 
 public interface IKeycloakService {
 	String CACHE_NAME = "variant-ids-per-clientid";
@@ -45,4 +46,6 @@ public interface IKeycloakService {
 	void addUserRealmRoles(List<String> roles, String userName, String realm);
 
 	void disableUserCredentials(String userName, String realm);
+
+	KeyResource getRealmKeys(String realmName);
 }

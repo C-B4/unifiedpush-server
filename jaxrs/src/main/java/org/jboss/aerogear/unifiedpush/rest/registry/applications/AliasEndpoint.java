@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 
+import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -59,6 +60,7 @@ import org.jboss.aerogear.unifiedpush.service.PushApplicationService;
 import org.jboss.aerogear.unifiedpush.service.impl.AliasServiceImpl.Associated;
 import org.jboss.aerogear.unifiedpush.service.impl.ServiceConstraintViolationException;
 import org.jboss.aerogear.unifiedpush.service.impl.UserTenantInfo;
+import org.jboss.aerogear.unifiedpush.service.impl.spring.IKeycloakService;
 import org.jboss.aerogear.unifiedpush.service.impl.spring.KeycloakServiceImpl;
 import org.keycloak.representations.AccessToken;
 import org.slf4j.Logger;
@@ -74,6 +76,9 @@ import com.qmino.miredot.annotations.ReturnType;
 public class AliasEndpoint extends AbstractBaseEndpoint {
 	public static final String INVALID_REQUEST_URI_RESPOONSE = "Invalid request URI";
 	private final Logger logger = LoggerFactory.getLogger(AliasEndpoint.class);
+
+	@Inject
+	private IKeycloakService keycloakService;
 
 	@Autowired
 	private PushApplicationService pushAppService;
@@ -264,22 +269,21 @@ public class AliasEndpoint extends AbstractBaseEndpoint {
 			AccessToken accessToken = BearerHelper.getTokenDataFromBearer(request).orNull();
 			if (accessToken != null && accessToken.getPreferredUsername().equals(alias)) {
 				ResponseBuilder response = Response.notModified();
-				if (passwordContainer.isDataValid()) {
+				// Extract application name from issuer.
+				// Last part of issuer uri is the application name
 
-					// Extract application name from issuer.
-					// Last part of issuer uri is the application name
-					String issuer = accessToken.getIssuer();
-					String jwtApplicationName = URLUtils.getLastPart(issuer);
+				String issuer = accessToken.getIssuer();
+				String realmName = URLUtils.getLastPart(issuer);
 
+				// Before performing the change, verify that the request is valid
+				if (passwordContainer.isDataValid() && BearerHelper.verifyBearerToken(request, keycloakService.getRealmKeys(realmName))) {
 					aliasService.updateAliasPassword(alias, passwordContainer.getCurrentPassword(),
-							passwordContainer.getNewPassword(), jwtApplicationName);
+							passwordContainer.getNewPassword(), realmName);
 
 					response = Response.ok(EmptyJSON.STRING);
+					return appendAllowOriginHeader(response, request);
 				}
-
-				return appendAllowOriginHeader(response, request);
 			}
-
 			return create401Response(request);
 		} catch (Exception e) {
 			logger.error("Cannot update aliases", e);
