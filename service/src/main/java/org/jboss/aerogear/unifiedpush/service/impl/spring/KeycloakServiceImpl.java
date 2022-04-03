@@ -22,10 +22,7 @@ import org.jboss.aerogear.unifiedpush.service.impl.spring.OAuth2Configuration.Do
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
-import org.keycloak.admin.client.resource.ClientResource;
-import org.keycloak.admin.client.resource.RealmResource;
-import org.keycloak.admin.client.resource.UserResource;
-import org.keycloak.admin.client.resource.UsersResource;
+import org.keycloak.admin.client.resource.*;
 import org.keycloak.admin.client.token.TokenManager;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.ClientRepresentation;
@@ -529,6 +526,12 @@ public class KeycloakServiceImpl implements IKeycloakService {
 	public void disableUserCredentials(String userName, String realmName) {
 		UserResource userResource = getUserResource(userName, realmName);
 		userResource.disableCredentialType(Collections.singletonList(PASSWORD_CREDNTIAL_DISABLE));
+	}
+
+	@Override
+	public KeyResource getRealmKeys(String realmName) {
+		Keycloak keycloak = kc.getKeycloak();
+		return keycloak.realm(realmName).keys();
 	}
 
 	private Keycloak getKeycloak(String userName, String password, String realm, String appId) {
