@@ -454,7 +454,7 @@ public class AliasEndpoint extends AbstractBaseEndpoint {
 			return Response.status(Status.INTERNAL_SERVER_ERROR)
 					.entity(quote("Error, alias " + e.getEntityId() + " already exists in db.")).build();
 		} catch (Exception e) {
-			logger.error("Cannot update aliases, {}", e.getCause());
+			logger.error("Cannot update aliases", e);
 			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
