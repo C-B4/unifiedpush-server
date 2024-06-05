@@ -23,9 +23,8 @@ import java.util.stream.Collectors;
  
 import org.jboss.aerogear.unifiedpush.message.Criteria;
 
-import com.google.android.gcm.server.Constants;
-
 public final class TokenLoaderUtils {
+    public static final String TOPIC_PREFIX = "/topics/";
 
     private TokenLoaderUtils () {
         // no-op
@@ -45,12 +44,12 @@ public final class TokenLoaderUtils {
 
         if (isEmptyCriteria(criteria)) {
             // use the variant 'convenience' topic
-            topics.add(Constants.TOPIC_PREFIX + variantID);
+            topics.add(TOPIC_PREFIX + variantID);
 
         } else if (isCategoryOnlyCriteria(criteria)) {
             // use the given categories
             topics.addAll(criteria.getCategories().stream()
-                    .map(category -> Constants.TOPIC_PREFIX + category)
+                    .map(category -> TOPIC_PREFIX + category)
                     .collect(Collectors.toList()));
             }
         return topics;

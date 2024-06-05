@@ -16,8 +16,8 @@
  */
 package org.jboss.aerogear.unifiedpush.message.token;
 
-import com.google.android.gcm.server.Constants;
 import org.jboss.aerogear.unifiedpush.message.Criteria;
+
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -65,7 +65,7 @@ public class TokenLoaderUtilsTest {
 
         assertThat(TokenLoaderUtils.extractGCMTopics(criteria, "123")).isNotEmpty();
         assertThat(TokenLoaderUtils.extractGCMTopics(criteria, "123")).containsOnly(
-                Constants.TOPIC_PREFIX+"123"
+                TokenLoaderUtils.TOPIC_PREFIX+"123"
         );
     }
 
@@ -78,7 +78,7 @@ public class TokenLoaderUtilsTest {
 
         assertThat(TokenLoaderUtils.extractGCMTopics(criteria, "123")).isNotEmpty();
         assertThat(TokenLoaderUtils.extractGCMTopics(criteria, "123")).containsOnly(
-                Constants.TOPIC_PREFIX+"football"
+                TokenLoaderUtils.TOPIC_PREFIX+"football"
         );
     }
 
@@ -97,7 +97,7 @@ public class TokenLoaderUtilsTest {
         final Criteria criteria = new Criteria();
         assertThat(TokenLoaderUtils.isGCMTopicRequest(criteria)).isTrue();
         assertThat(TokenLoaderUtils.extractGCMTopics(criteria, "123")).containsOnly(
-                Constants.TOPIC_PREFIX+"123"
+                TokenLoaderUtils.TOPIC_PREFIX+"123"
         );
     }
 
@@ -107,7 +107,7 @@ public class TokenLoaderUtilsTest {
         criteria.setCategories(Arrays.asList("football"));
         assertThat(TokenLoaderUtils.isGCMTopicRequest(criteria)).isTrue();
         assertThat(TokenLoaderUtils.extractGCMTopics(criteria, "123")).containsOnly(
-                Constants.TOPIC_PREFIX+"football"
+                TokenLoaderUtils.TOPIC_PREFIX+"football"
         );
     }
 
@@ -133,7 +133,7 @@ public class TokenLoaderUtilsTest {
 
         assertThat(TokenLoaderUtils.isGCMTopicRequest(criteria)).isTrue();
         assertThat(TokenLoaderUtils.extractGCMTopics(criteria, "123")).containsOnly(
-                Constants.TOPIC_PREFIX+"football"
+                TokenLoaderUtils.TOPIC_PREFIX+"football"
         );
 
     }
