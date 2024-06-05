@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 import org.jboss.aerogear.unifiedpush.message.HealthNetworkService;
-import org.jboss.aerogear.unifiedpush.message.sender.fcm.ConfigurableFCMSender;
 import org.jboss.aerogear.unifiedpush.service.impl.health.HealthDetails;
 import org.jboss.aerogear.unifiedpush.service.impl.health.Ping;
 import org.jboss.aerogear.unifiedpush.service.impl.health.PushNetwork;
@@ -45,8 +44,8 @@ import com.turo.pushy.apns.ApnsClient;
 public class HealthNetworkServiceImpl implements HealthNetworkService {
     private static final String customAerogearApnsPushHost = tryGetProperty(CUSTOM_AEROGEAR_APNS_PUSH_HOST);
     private static final Integer customAerogearApnsPushPort = tryGetIntegerProperty(CUSTOM_AEROGEAR_APNS_PUSH_PORT);
-
-    private static final String FCM_SEND_ENDPOINT = ConfigurableFCMSender.FCM_ENDPOINT_HOST.substring("https://".length(), ConfigurableFCMSender.FCM_ENDPOINT_HOST.indexOf('/', "https://".length()));
+    public static final String FCM_ENDPOINT_HOST = "https://fcm.googleapis.com/v1/projects/c-retail/messages:send";
+    private static final String FCM_SEND_ENDPOINT = FCM_ENDPOINT_HOST.substring("https://".length(), FCM_ENDPOINT_HOST.indexOf('/', "https://".length()));
     public static final String WNS_SEND_ENDPOINT = "db3.notify.windows.com";
     private static final List<PushNetwork> PUSH_NETWORKS = new ArrayList<>(Arrays.asList(
             new PushNetwork[]{
