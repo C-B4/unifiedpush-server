@@ -432,6 +432,12 @@
 			</dependency>
 
 			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>19.0</version>
+			</dependency>
+
+			<dependency>
 				<groupId>io.netty</groupId>
 				<artifactId>netty-all</artifactId>
 				<version>${io.netty}</version>
@@ -587,7 +593,7 @@
 		<!-- Cassandra related properties -->
 		<failsafe.version>2.19.1</failsafe.version>
 		<cassandra.version>3.11.1</cassandra.version>
-		<cassandra-driver-core.version>3.5.0</cassandra-driver-core.version>
+		<cassandra-driver-core.version>3.11.0</cassandra-driver-core.version>
 		<cassandra-data.version>2.0.2.RELEASE</cassandra-data.version>
 		<spring-data.version>2.0.2.RELEASE</spring-data.version>
 
