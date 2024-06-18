@@ -420,10 +420,10 @@
 						<artifactId>log4j</artifactId>
 						<groupId>log4j</groupId>
 					</exclusion>
-					<exclusion>
-						<groupId>com.google.guava</groupId>
-						<artifactId>guava</artifactId>
-					</exclusion>
+<!--					<exclusion>-->
+<!--						<groupId>com.google.guava</groupId>-->
+<!--						<artifactId>guava</artifactId>-->
+<!--					</exclusion>-->
 					<exclusion>
 						<groupId>io.netty</groupId>
 						<artifactId>netty-handler</artifactId>
