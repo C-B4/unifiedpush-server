@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
 import org.jboss.aerogear.unifiedpush.api.AndroidVariant;
 import org.jboss.aerogear.unifiedpush.api.Variant;
 import org.jboss.aerogear.unifiedpush.api.VariantType;
@@ -53,20 +55,24 @@ public class FCMPushNotificationSender implements PushNotificationSender {
 
     private FirebaseApp app;
     private FirebaseMessaging firebaseMessaging;
-    public FCMPushNotificationSender() {
+    @PostConstruct
+    public void init() {
         FirebaseOptions options;
         try {
+            logger.info("init, inside try cardentials={}=========", GoogleCredentials.getApplicationDefault());
             options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.getApplicationDefault())
                     .setProjectId("c-retail") // Set your Firebase project ID here
                     .build();
         } catch (IOException e) {
+            logger.info("init, inside catch e={}=========", e.getMessage());
             throw new RuntimeException(e);
         }
 
         // Initialize FirebaseApp with the FirebaseOptions
-        this.app = FirebaseApp.initializeApp(options);
+        this.app = FirebaseApp.initializeApp(options, "cretail");
         this.firebaseMessaging = FirebaseMessaging.getInstance(this.app);
+        logger.info("init, options={} firebaseMessaging={} FirebaseApp={}=========", options, this.firebaseMessaging, this.app);
     }
 
     private final Logger logger = LoggerFactory.getLogger(FCMPushNotificationSender.class);
@@ -80,6 +86,7 @@ public class FCMPushNotificationSender implements PushNotificationSender {
         logger.info("sendPushMessage, firebaseMessaging={} FirebaseApp={}=========", firebaseMessaging, app);
         // no need to send empty list
         if (tokens.isEmpty()) {
+            logger.info("sendPushMessage, token is empty=========");
             return;
         }
 
@@ -114,13 +121,17 @@ public class FCMPushNotificationSender implements PushNotificationSender {
 
         // push targets can be registration IDs OR topics (starting /topic/), but they can't be mixed.
         if (pushTargets.get(0).startsWith(TokenLoaderUtils.TOPIC_PREFIX)) {
+            logger.info("sendPushMessage, start with topic=========");
             Builder firebaseMessageBuilder = prepareFireBaseMessage(message, notification, androidConfig, pushMessageInformationId);
+            logger.info("sendPushMessage, firebaseMessageBuilder={}=========", firebaseMessageBuilder);
             // send out a message to a batch of devices...
             processFCM(pushTargets, firebaseMessageBuilder, callback);
             return;
         }
 
+        logger.info("sendPushMessage, start with multicastBuilder=========");
         MulticastMessage.Builder multicastBuilder = prepareFireBaseMulticastMessage(message, notification, androidConfig, pushMessageInformationId);
+        logger.info("sendPushMessage, multicast={}=========", multicastBuilder);
         processFirebaseMultiCast(pushTargets, multicastBuilder, callback);
     }
 
@@ -175,7 +186,7 @@ public class FCMPushNotificationSender implements PushNotificationSender {
     private void processFCM(List<String> pushTargets, Builder firebaseMessageBuilder, NotificationSenderCallback callback) {
         // send it out.....
         try {
-            logger.info("Sending transformed FCM payload: {}", firebaseMessageBuilder);
+            logger.info("Sending transformed FCM payload: {}", firebaseMessageBuilder.build());
 
             for (String topic : pushTargets) {
                 logger.info(String.format("Sent push notification to FCM topic: %s", topic));
