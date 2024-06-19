@@ -59,10 +59,12 @@ public class FCMPushNotificationSender implements PushNotificationSender {
     public void init() {
         FirebaseOptions options;
         try {
-            logger.info("init, inside try cardentials={}=========", GoogleCredentials.getApplicationDefault());
+            GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
+            logger.info("init, inside try cardentials{}==========", credentials);
             options = FirebaseOptions.builder()
-                    .setCredentials(GoogleCredentials.getApplicationDefault())
+                    .setCredentials(credentials)
                     .setProjectId("c-retail") // Set your Firebase project ID here
+                    .setDatabaseUrl("https://c-retail.firebaseio.com")
                     .build();
         } catch (IOException e) {
             logger.info("init, inside catch e={}=========", e.getMessage());
