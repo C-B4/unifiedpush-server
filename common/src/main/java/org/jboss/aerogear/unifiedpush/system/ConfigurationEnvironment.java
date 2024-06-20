@@ -25,7 +25,9 @@ public class ConfigurationEnvironment {
 	
 	public static final String PROPERTIES_DOCUMENTS_QUERY_DAYS = "aerogear.config.documents.query.period.days";
 	public static final String PROP_MASTER_VERIFICATION = "aerogear.config.verification.master_code";
-	
+	public static final String PROJECT_ID = "c-retail";
+	public static final String HTTPS_PROTOCOL = "https://";
+
 	@Autowired
 	private Environment env;
 
