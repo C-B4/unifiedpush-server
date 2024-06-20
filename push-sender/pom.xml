@@ -63,12 +63,6 @@
 			<artifactId>pushy</artifactId>
 		</dependency>
 
-<!--		<dependency>-->
-<!--			<groupId>com.google.gcm</groupId>-->
-<!--			<artifactId>gcm-server</artifactId>-->
-<!--			<scope>compile</scope>-->
-<!--		</dependency>-->
-
 		<dependency>
 			<groupId>com.google.firebase</groupId>
 			<artifactId>firebase-admin</artifactId>

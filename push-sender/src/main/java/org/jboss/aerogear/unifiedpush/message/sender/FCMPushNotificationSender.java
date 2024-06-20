@@ -31,6 +31,7 @@ import org.jboss.aerogear.unifiedpush.message.Priority;
 import org.jboss.aerogear.unifiedpush.message.UnifiedPushMessage;
 import org.jboss.aerogear.unifiedpush.message.apns.APNs;
 import org.jboss.aerogear.unifiedpush.message.token.TokenLoaderUtils;
+import org.jboss.aerogear.unifiedpush.system.ConfigurationEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -52,7 +53,6 @@ import com.google.firebase.messaging.SendResponse;
 @Service
 @Qualifier(value = VariantType.ANDROIDQ)
 public class FCMPushNotificationSender implements PushNotificationSender {
-
     private FirebaseApp app;
     private FirebaseMessaging firebaseMessaging;
     @PostConstruct
@@ -60,21 +60,25 @@ public class FCMPushNotificationSender implements PushNotificationSender {
         FirebaseOptions options;
         try {
             GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
-            logger.info("init, inside try cardentials{}==========", credentials);
+            String databaseUrl = new StringBuilder().append(ConfigurationEnvironment.HTTPS_PROTOCOL)
+                    .append(ConfigurationEnvironment.PROJECT_ID)
+                    .append(".firebaseio.com")
+                    .toString();
+
             options = FirebaseOptions.builder()
                     .setCredentials(credentials)
-                    .setProjectId("c-retail") // Set your Firebase project ID here
-                    .setDatabaseUrl("https://c-retail.firebaseio.com")
+                    .setProjectId(ConfigurationEnvironment.PROJECT_ID) // Set your Firebase project ID here
+                    .setDatabaseUrl(databaseUrl)
                     .build();
         } catch (IOException e) {
-            logger.info("init, inside catch e={}=========", e.getMessage());
+            logger.error("FCMPushNotificationSender init stage, failed due to e={}", e.getMessage());
             throw new RuntimeException(e);
         }
 
         // Initialize FirebaseApp with the FirebaseOptions
-        this.app = FirebaseApp.initializeApp(options, "cretail");
+        this.app = FirebaseApp.initializeApp(options, ConfigurationEnvironment.PROJECT_ID);
         this.firebaseMessaging = FirebaseMessaging.getInstance(this.app);
-        logger.info("init, options={} firebaseMessaging={} FirebaseApp={}=========", options, this.firebaseMessaging, this.app);
+        logger.info("FCMPushNotificationSender init stage, FirebaseApp={}", this.app);
     }
 
     private final Logger logger = LoggerFactory.getLogger(FCMPushNotificationSender.class);
@@ -85,10 +89,9 @@ public class FCMPushNotificationSender implements PushNotificationSender {
      */
     @Override
     public void sendPushMessage(Variant variant, Collection<String> tokens, UnifiedPushMessage pushMessage, String pushMessageInformationId, NotificationSenderCallback callback) {
-        logger.info("sendPushMessage, firebaseMessaging={} FirebaseApp={}=========", firebaseMessaging, app);
         // no need to send empty list
         if (tokens.isEmpty()) {
-            logger.info("sendPushMessage, token is empty=========");
+            logger.info("sendPushMessage, token is empty push will not be sent");
             return;
         }
 
@@ -106,7 +109,6 @@ public class FCMPushNotificationSender implements PushNotificationSender {
         by FCM to wake up devices in Doze mode as well as apps in AppStandby
         mode.  This has no effect on devices older than Android 6.0
         */
-
         com.google.firebase.messaging.AndroidConfig.Priority priority = message.getPriority() ==  Priority.HIGH ?
                 AndroidConfig.Priority.HIGH :
                 AndroidConfig.Priority.NORMAL;
@@ -120,43 +122,39 @@ public class FCMPushNotificationSender implements PushNotificationSender {
             androidConfig.setTtl(ttl);
         }
 
-
         // push targets can be registration IDs OR topics (starting /topic/), but they can't be mixed.
         if (pushTargets.get(0).startsWith(TokenLoaderUtils.TOPIC_PREFIX)) {
-            logger.info("sendPushMessage, start with topic=========");
-            Builder firebaseMessageBuilder = prepareFireBaseMessage(message, notification, androidConfig, pushMessageInformationId);
-            logger.info("sendPushMessage, firebaseMessageBuilder={}=========", firebaseMessageBuilder);
-            // send out a message to a batch of devices...
-            processFCM(pushTargets, firebaseMessageBuilder, callback);
+            logger.debug("sendPushMessage, start preparing and send message with topic");
+            Builder firebaseRegularMessageBuilder = prepareFireBaseRegularMessage(message, notification, androidConfig, pushMessageInformationId);
+            processFirebaseRegularMessage(pushTargets, firebaseRegularMessageBuilder, callback);
             return;
         }
 
-        logger.info("sendPushMessage, start with multicastBuilder=========");
+        logger.debug("sendPushMessage, start preparing and send multicast message");
         MulticastMessage.Builder multicastBuilder = prepareFireBaseMulticastMessage(message, notification, androidConfig, pushMessageInformationId);
-        logger.info("sendPushMessage, multicast={}=========", multicastBuilder);
-        processFirebaseMultiCast(pushTargets, multicastBuilder, callback);
+        processFirebaseMultiCastMessage(pushTargets, multicastBuilder, callback);
     }
 
-    private Builder prepareFireBaseMessage(org.jboss.aerogear.unifiedpush.message.Message message, Notification notification, AndroidConfig.Builder androidConfig, String pushMessageInformationId) {
+    private Builder prepareFireBaseRegularMessage(org.jboss.aerogear.unifiedpush.message.Message message, Notification notification, AndroidConfig.Builder androidConfig, String pushMessageInformationId) {
         // payload builder:
-        Builder fcmBuilder = Message.builder();
+        Builder firebaseSingleMessageBuilder = Message.builder();
 
         // add the "recognized" keys...
-        fcmBuilder.putData("alert", message.getAlert());
-        fcmBuilder.putData("sound", message.getSound());
-        fcmBuilder.putData("badge", String.valueOf(message.getBadge()));
-        fcmBuilder.setNotification(notification);
+        firebaseSingleMessageBuilder.putData("alert", message.getAlert());
+        firebaseSingleMessageBuilder.putData("sound", message.getSound());
+        firebaseSingleMessageBuilder.putData("badge", String.valueOf(message.getBadge()));
+        firebaseSingleMessageBuilder.setNotification(notification);
 
 
-        fcmBuilder.setAndroidConfig(androidConfig.build());
+        firebaseSingleMessageBuilder.setAndroidConfig(androidConfig.build());
 
         // iterate over the missing keys:
         message.getUserData().keySet()
-                .forEach(key -> fcmBuilder.putData(key, String.valueOf(message.getUserData().get(key))));
+                .forEach(key -> firebaseSingleMessageBuilder.putData(key, String.valueOf(message.getUserData().get(key))));
 
         //add the aerogear-push-id
-        fcmBuilder.putData(InternalUnifiedPushMessage.PUSH_MESSAGE_ID, pushMessageInformationId);
-        return fcmBuilder;
+        firebaseSingleMessageBuilder.putData(InternalUnifiedPushMessage.PUSH_MESSAGE_ID, pushMessageInformationId);
+        return firebaseSingleMessageBuilder;
     }
     private MulticastMessage.Builder prepareFireBaseMulticastMessage(org.jboss.aerogear.unifiedpush.message.Message message, Notification notification, AndroidConfig.Builder androidConfig, String pushMessageInformationId) {
         // payload builder:
@@ -185,61 +183,49 @@ public class FCMPushNotificationSender implements PushNotificationSender {
     /**
      * Process the HTTP POST to the FCM infrastructure for the given list of registrationIDs.
      */
-    private void processFCM(List<String> pushTargets, Builder firebaseMessageBuilder, NotificationSenderCallback callback) {
-        // send it out.....
+    private void processFirebaseRegularMessage(List<String> pushTargets, Builder firebaseMessageBuilder, NotificationSenderCallback callback) {
         try {
-            logger.info("Sending transformed FCM payload: {}", firebaseMessageBuilder.build());
-
             for (String topic : pushTargets) {
                 logger.info(String.format("Sent push notification to FCM topic: %s", topic));
                 firebaseMessageBuilder.setTopic(topic);
                 String result = firebaseMessaging.send(firebaseMessageBuilder.build());
-                //SendResponse result = sender.sendNoRetry(fcmBuilder, topic);
-                logger.info("Response from FCM topic request======= {}", result);
+                logger.info("processFirebaseSingleMessage, Response from FCM topic request={}", result);
             }
-            logger.debug("Message batch to FCM has been submitted");
+            logger.debug("processFirebaseSingleMessage, Message batch to FCM has been submitted");
             callback.onSuccess();
         } catch (Exception e) {
-        // FCM exceptions:
-        callback.onError(String.format("Error sending payload to FCM server: %s", e.getMessage()));
+            callback.onError(String.format("Error sending payload to FCM server: %s", e.getMessage()));
         }
     }
 
-    private void processFirebaseMultiCast(List<String> pushTargets, MulticastMessage.Builder firebaseMulticastMessage, NotificationSenderCallback callback) {
-        // send it out.....
+    private void processFirebaseMultiCastMessage(List<String> pushTargets, MulticastMessage.Builder firebaseMulticastMessage, NotificationSenderCallback callback) {
         try {
-            logger.info("Sending transformed FCM payload: {}", firebaseMulticastMessage);
             logger.info(String.format("Sent push notification to FCM Server for %d registrationIDs", pushTargets.size()));
-
             firebaseMulticastMessage.addAllTokens(pushTargets);
-
-
             BatchResponse multicastResult = firebaseMessaging.sendMulticast(firebaseMulticastMessage.build());
-            logger.info("Response from FCM request: {}", multicastResult);
             // after sending, let's identify the inactive/invalid registrationIDs and trigger their deletion:
             handleMulticastResponses(multicastResult, pushTargets);
             callback.onSuccess();
         } catch (Exception e) {
-            // FCM exceptions:
             callback.onError(String.format("Error sending payload to FCM server: %s", e.getMessage()));
         }
     }
 
     private void handleMulticastResponses(BatchResponse multicastResult, List<String> registrationIDs) {
-
-        // get the FCM send responses for all of the client devices:
+        // get the FCM send responses for all the client devices:
         final List<SendResponse> responses = multicastResult.getResponses();
 
         // read the responses:
         int i = 0;
         for (SendResponse response : responses) {
             // use the current index to access the individual responses
-            logger.info("handleMulticastResponses, current multicast response========={}", response);
             FirebaseMessagingException exception = response.getException();
             if (exception != null) {
                 MessagingErrorCode messagingErrorCode = exception.getMessagingErrorCode();
                 if (messagingErrorCode != null) {
-                    logger.info("Processing {} error code from FCM response, for registration ID: {}", messagingErrorCode, registrationIDs.get(i));
+                    // See CAPP-27286 As part of migration to HTTP V1 api of Firebase, we didn't want to fail the process if we get error for one of the users.
+                    // TODO maybe for the future it will be nice to notify it
+                    logger.error("handleMulticastResponses, processing {} error code from FCM response, for registration ID: {}", messagingErrorCode, registrationIDs.get(i));
                 }
             }
             i++;
