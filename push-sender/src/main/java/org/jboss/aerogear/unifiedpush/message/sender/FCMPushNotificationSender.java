@@ -236,9 +236,11 @@ public class FCMPushNotificationSender implements PushNotificationSender {
             // use the current index to access the individual responses
             logger.info("handleMulticastResponses, current multicast response========={}", response);
             FirebaseMessagingException exception = response.getException();
-            MessagingErrorCode messagingErrorCode = exception.getMessagingErrorCode();
-            if (messagingErrorCode != null) {
-                logger.info("Processing {} error code from FCM response, for registration ID: {}", messagingErrorCode, registrationIDs.get(i));
+            if (exception != null) {
+                MessagingErrorCode messagingErrorCode = exception.getMessagingErrorCode();
+                if (messagingErrorCode != null) {
+                    logger.info("Processing {} error code from FCM response, for registration ID: {}", messagingErrorCode, registrationIDs.get(i));
+                }
             }
             i++;
         }
