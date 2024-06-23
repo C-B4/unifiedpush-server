@@ -64,11 +64,11 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.google.gcm</groupId>
-			<artifactId>gcm-server</artifactId>
+			<groupId>com.google.firebase</groupId>
+			<artifactId>firebase-admin</artifactId>
+			<version>8.0.0</version>
 			<scope>compile</scope>
 		</dependency>
-
 		<!-- Exclude old httpclient and make sure only one version is used -->
 		<!-- We Also exclude jersey because it is bundled with with old jaxrs classes -->
 		<!-- httpclient, jaxrs-api and resteasy-jaxrs are added because of the
