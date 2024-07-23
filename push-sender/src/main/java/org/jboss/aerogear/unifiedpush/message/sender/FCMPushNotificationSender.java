@@ -19,9 +19,12 @@ package org.jboss.aerogear.unifiedpush.message.sender;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 
 import org.jboss.aerogear.unifiedpush.api.AndroidVariant;
 import org.jboss.aerogear.unifiedpush.api.Variant;
@@ -31,6 +34,7 @@ import org.jboss.aerogear.unifiedpush.message.Priority;
 import org.jboss.aerogear.unifiedpush.message.UnifiedPushMessage;
 import org.jboss.aerogear.unifiedpush.message.apns.APNs;
 import org.jboss.aerogear.unifiedpush.message.token.TokenLoaderUtils;
+import org.jboss.aerogear.unifiedpush.service.ClientInstallationAsyncService;
 import org.jboss.aerogear.unifiedpush.system.ConfigurationEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +57,8 @@ import com.google.firebase.messaging.SendResponse;
 @Service
 @Qualifier(value = VariantType.ANDROIDQ)
 public class FCMPushNotificationSender implements PushNotificationSender {
+    @Inject
+    private ClientInstallationAsyncService clientInstallationAsyncService;
     private FirebaseApp app;
     private FirebaseMessaging firebaseMessaging;
     @PostConstruct
@@ -109,11 +115,11 @@ public class FCMPushNotificationSender implements PushNotificationSender {
         by FCM to wake up devices in Doze mode as well as apps in AppStandby
         mode.  This has no effect on devices older than Android 6.0
         */
-        com.google.firebase.messaging.AndroidConfig.Priority priority = message.getPriority() ==  Priority.HIGH ?
+        AndroidConfig.Priority priority = message.getPriority() ==  Priority.HIGH ?
                 AndroidConfig.Priority.HIGH :
                 AndroidConfig.Priority.NORMAL;
 
-        com.google.firebase.messaging.AndroidConfig.Builder androidConfig = AndroidConfig.builder()
+        AndroidConfig.Builder androidConfig = AndroidConfig.builder()
                 .setPriority(priority);
 
         // if present, apply the time-to-live metadata:
@@ -122,6 +128,7 @@ public class FCMPushNotificationSender implements PushNotificationSender {
             androidConfig.setTtl(ttl);
         }
 
+        final AndroidVariant androidVariant = (AndroidVariant) variant;
         // push targets can be registration IDs OR topics (starting /topic/), but they can't be mixed.
         if (pushTargets.get(0).startsWith(TokenLoaderUtils.TOPIC_PREFIX)) {
             logger.debug("sendPushMessage, start preparing and send message with topic");
@@ -132,7 +139,7 @@ public class FCMPushNotificationSender implements PushNotificationSender {
 
         logger.debug("sendPushMessage, start preparing and send multicast message");
         MulticastMessage.Builder multicastBuilder = prepareFireBaseMulticastMessage(message, notification, androidConfig, pushMessageInformationId);
-        processFirebaseMultiCastMessage(pushTargets, multicastBuilder, callback);
+        processFirebaseMultiCastMessage(pushTargets, multicastBuilder, callback, androidVariant);
     }
 
     private Builder prepareFireBaseRegularMessage(org.jboss.aerogear.unifiedpush.message.Message message, Notification notification, AndroidConfig.Builder androidConfig, String pushMessageInformationId) {
@@ -198,25 +205,27 @@ public class FCMPushNotificationSender implements PushNotificationSender {
         }
     }
 
-    private void processFirebaseMultiCastMessage(List<String> pushTargets, MulticastMessage.Builder firebaseMulticastMessage, NotificationSenderCallback callback) {
+    private void processFirebaseMultiCastMessage(List<String> pushTargets, MulticastMessage.Builder firebaseMulticastMessage, NotificationSenderCallback callback, AndroidVariant androidVariant) {
         try {
             logger.info(String.format("Sent push notification to FCM Server for %d registrationIDs", pushTargets.size()));
             firebaseMulticastMessage.addAllTokens(pushTargets);
             BatchResponse multicastResult = firebaseMessaging.sendMulticast(firebaseMulticastMessage.build());
             // after sending, let's identify the inactive/invalid registrationIDs and trigger their deletion:
-            handleMulticastResponses(multicastResult, pushTargets);
+            handleMulticastResponses(multicastResult, pushTargets, androidVariant);
             callback.onSuccess();
         } catch (Exception e) {
             callback.onError(String.format("Error sending payload to FCM server: %s", e.getMessage()));
         }
     }
 
-    private void handleMulticastResponses(BatchResponse multicastResult, List<String> registrationIDs) {
+
+    private void handleMulticastResponses(BatchResponse multicastResult, List<String> registrationIDs, AndroidVariant androidVariant) {
         // get the FCM send responses for all the client devices:
         final List<SendResponse> responses = multicastResult.getResponses();
 
         // read the responses:
         int i = 0;
+        Set<String> inactiveTokens = new HashSet<>();
         for (SendResponse response : responses) {
             // use the current index to access the individual responses
             FirebaseMessagingException exception = response.getException();
@@ -225,10 +234,19 @@ public class FCMPushNotificationSender implements PushNotificationSender {
                 if (messagingErrorCode != null) {
                     // See CAPP-27286 As part of migration to HTTP V1 api of Firebase, we didn't want to fail the process if we get error for one of the users.
                     // TODO maybe for the future it will be nice to notify it
-                    logger.error("handleMulticastResponses, processing {} error code from FCM response, for registration ID: {}", messagingErrorCode, registrationIDs.get(i));
+                    String currentToken = registrationIDs.get(i);
+                    inactiveTokens.add(currentToken);
+                    logger.error("handleMulticastResponses, processing {} error code from FCM response, for registration ID: {}", messagingErrorCode, currentToken);
                 }
             }
             i++;
+        }
+
+        String variantId = androidVariant.getVariantID();
+        if (!inactiveTokens.isEmpty()) {
+            // trigger asynchronous deletion:
+            logger.info(String.format("handleMulticastResponses, Based on FCM response data and error codes, deleting %d invalid or duplicated Android installations", inactiveTokens.size()));
+            clientInstallationAsyncService.removeInstallationsForVariantByDeviceTokens(variantId, inactiveTokens);
         }
     }
 }
