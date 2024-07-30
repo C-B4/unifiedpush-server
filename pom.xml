@@ -577,7 +577,7 @@
 		<aerogear.crypto.version>0.1.5</aerogear.crypto.version>
 
 		<postgresql.version>42.1.4</postgresql.version>
-		<fasterxml.version>2.9.5</fasterxml.version>
+		<fasterxml.version>2.10.0</fasterxml.version>
 		<wildfly.version>14.0.1.Final</wildfly.version>
 		<org.infinispan>9.3.1.Final</org.infinispan>
 		<springframework.version>5.0.2.RELEASE</springframework.version>
@@ -586,7 +586,7 @@
 		<io.netty>4.1.25.Final</io.netty>
 		<!-- Cassandra related properties -->
 		<failsafe.version>2.19.1</failsafe.version>
-		<cassandra.version>3.11.1</cassandra.version>
+		<cassandra.version>4.0.0</cassandra.version>
 		<cassandra-driver-core.version>3.11.0</cassandra-driver-core.version>
 		<cassandra-data.version>2.0.2.RELEASE</cassandra-data.version>
 		<spring-data.version>2.0.2.RELEASE</spring-data.version>
