@@ -406,6 +406,12 @@
 			</dependency>
 
 
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>18.0</version>
+			</dependency>
+
 			<!-- Cassandra driver and dependencies -->
 			<dependency>
 				<groupId>com.datastax.cassandra</groupId>
@@ -587,7 +593,7 @@
 		<!-- Cassandra related properties -->
 		<failsafe.version>2.19.1</failsafe.version>
 		<cassandra.version>3.11.1</cassandra.version>
-		<cassandra-driver-core.version>3.5.0</cassandra-driver-core.version>
+		<cassandra-driver-core.version>3.3.2</cassandra-driver-core.version>
 		<cassandra-data.version>2.0.2.RELEASE</cassandra-data.version>
 		<spring-data.version>2.0.2.RELEASE</spring-data.version>
 
@@ -645,10 +651,6 @@
 							<exclusion>
 								<artifactId>slf4j-log4j12</artifactId>
 								<groupId>org.slf4j</groupId>
-							</exclusion>
-							<exclusion>
-								<groupId>com.google.guava</groupId>
-								<artifactId>guava</artifactId>
 							</exclusion>
 						</exclusions>
 					</dependency>

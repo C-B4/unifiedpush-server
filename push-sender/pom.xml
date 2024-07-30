@@ -68,6 +68,18 @@
 			<artifactId>firebase-admin</artifactId>
 			<version>8.0.0</version>
 			<scope>compile</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>com.google.guava</groupId>
+					<artifactId>guava</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- Adding Guava 30 for Firebase -->
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>30.1.1-android</version>
 		</dependency>
 		<!-- Exclude old httpclient and make sure only one version is used -->
 		<!-- We Also exclude jersey because it is bundled with with old jaxrs classes -->
@@ -143,6 +155,33 @@
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
 			</plugin>
+			<!-- Maven Shade Plugin -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.2.4</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<artifactSet>
+								<includes>
+									<include>com.google.firebase:firebase-admin</include>
+								</includes>
+							</artifactSet>
+							<relocations>
+								<relocation>
+									<pattern>com.google.common</pattern>
+									<shadedPattern>shadowed.com.google.common</shadedPattern>
+								</relocation>
+							</relocations>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 		<resources>
 			<resource>
@@ -169,6 +208,7 @@
 				</includes>
 			</testResource>
 		</testResources>
+
 	</build>
 
 	<profiles>
