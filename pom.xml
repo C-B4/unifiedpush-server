@@ -343,14 +343,14 @@
 				<scope>provided</scope>
 			</dependency>
 
-			<!-- Add the Netty native transport dependency with compile scope -->
-			<dependency>
-				<groupId>io.netty</groupId>
-				<artifactId>netty-transport-native-epoll</artifactId>
-				<version>4.1.25.Final</version>
-				<classifier>linux-x86_64</classifier>
-				<scope>compile</scope>
-			</dependency>
+<!--			&lt;!&ndash; Add the Netty native transport dependency with compile scope &ndash;&gt;-->
+<!--			<dependency>-->
+<!--				<groupId>io.netty</groupId>-->
+<!--				<artifactId>netty-transport-native-epoll</artifactId>-->
+<!--				<version>4.1.25.Final</version>-->
+<!--				<classifier>linux-x86_64</classifier>-->
+<!--				<scope>compile</scope>-->
+<!--			</dependency>-->
 
 			<dependency>
 				<groupId>org.infinispan</groupId>
@@ -418,7 +418,7 @@
 			<dependency>
 				<groupId>com.google.guava</groupId>
 				<artifactId>guava</artifactId>
-				<version>18.0</version>
+				<version>19.0</version>
 			</dependency>
 
 			<!-- Cassandra driver and dependencies -->
