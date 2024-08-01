@@ -266,6 +266,7 @@
 				<dependency>
 					<groupId>io.netty</groupId>
 					<artifactId>netty-all</artifactId>
+					<version>${io.netty}</version>
 					<scope>test</scope>
 				</dependency>
 
