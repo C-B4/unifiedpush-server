@@ -436,20 +436,11 @@
 				<artifactId>netty-all</artifactId>
 				<version>${io.netty}</version>
 			</dependency>
-
-			<dependency>
-				<groupId>io.netty</groupId>
-				<artifactId>netty-transport-native-epoll</artifactId>
-				<version>${io.netty}</version>
-				<classifier>linux-x86_64</classifier>
-			</dependency>
-
 			<dependency>
 				<groupId>io.netty</groupId>
 				<artifactId>netty-handler</artifactId>
 				<version>${io.netty}</version>
 			</dependency>
-
 			<dependency>
 				<groupId>io.netty</groupId>
 				<artifactId>netty-handler-proxy</artifactId>
